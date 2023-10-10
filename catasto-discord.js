@@ -2,7 +2,7 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 const fs = require('fs');
 
-const prefix = '!'; // Simbolo con quale vuoi far iniziare il comando
+const prefix = '?'; // Simbolo con quale vuoi far iniziare il comando
 const comando = 'cerca';
 
 const JsonParticelle = require('./particelle.json'); // Sostituisci con il percorso corretto del primo file JSON
@@ -30,15 +30,27 @@ client.on('message', (message) => {
         return item.FOGLIO === foglioDaCercare && item.NUMERO === numeroDaCercare;
       });
 
+      const partita = risultati1[0].PARTITA;
+
       // Cerca nel secondo file JSON
       const risultati2 = JsonAnagrafica.data.filter((item) => {
-        return item.PARTITA === numeroDaCercare;
+        return item.PARTITA === partita;
       });
-      //--------- BLOCCO RICERCA DATO -------------------
-      const risultati = risultati1.concat(risultati2); // Combina i risultati dai due file JSON
 
-      if (risultati.length > 0) {
-        risultati.forEach((risultato) => {
+      let intestatari = [];
+
+      risultati2.forEach(intestatario => {
+        intestatari.push({
+          nome: intestatario.NOME,
+          cognome: intestatario.COGNOME
+        })
+      })
+
+      risultati1[0].intestatari = intestatari;
+
+      console.log(risultati1);
+      if (risultati1.length > 0) {
+        risultati1.forEach((risultato) => {
           // ManipolazioneStringaRisultato con questo manopoli il risultato della stringa facndogli scrivere quello che vuoi tu a patto che sia presente nel file json
          // const ManipolazioneStringaRisultato = `### INFORMAZIONI PERSONALI\n NOME: ${risultato.NOME}\nCOGNOME: ${risultato.COGNOME}\nSUP: ${risultato.SUPPLEMEN}\n### INFORMAZIONI PARTICELLA\n ETTARI: ${risultato.ETTARI}\ARE: ${risultato.ARE}\CENTIARE: ${risultato.CENTIARE}`;
          //--------- EMBED ( OGGETTO DOVE VENGONO STAMPATE TUTTE LE STRINGHE) -------------------
@@ -78,5 +90,5 @@ client.on('message', (message) => {
   }
 });
 
-const token = '';
+const token = 'MTE2MTM0MTE5MDM4NjQ4NzUwOQ.GIDWHe.Z3FL05mKsN_tdVFycNLnwxYyAkhgbrEFs1wt34';
 client.login(token);
