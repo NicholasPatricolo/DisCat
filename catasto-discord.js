@@ -135,6 +135,6 @@ client.on('message', (message) => {
 });
 
 
-const token = 'MTE2MTE3Mjc4MDExMzQ3MzYxNg.GxiVKz.wf0qaRoWWyg7B5PUCRZgWOXc5zAPy9Ac1xo1pY';
+const token = '';
 
 client.login(token);
