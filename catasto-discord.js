@@ -84,8 +84,8 @@ client.on('message', (message) => {
   }
   if (command === cmd_cerca_anagrafica) {
     if (args.length === 2) {
-      const cognomeDaCercare = args[0]; // Non è necessario il parsing
-      const nomeDaCercare = args[1]; // Non è necessario il parsing
+      const cognomeDaCercare = args[0]; 
+      const nomeDaCercare = args[1];
      //------------ Cerca nel file JSON ( anagrafica.json ) ------------
       const risultati1 = JsonAnagrafica.data.filter((item) => {
         return item.COGNOME === cognomeDaCercare && item.NOME === nomeDaCercare;
