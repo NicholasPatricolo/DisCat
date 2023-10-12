@@ -1,13 +1,14 @@
+//------------ LIB -----------------------------------------------------------------------
 const Discord = require('discord.js');
-const client = new Discord.Client();
 const fs = require('fs');
-
-const prefix = '?'; // Simbolo con quale vuoi far iniziare il comando
-const comando = 'cerca';
-
-const JsonParticelle = require('./particelle.json'); // Sostituisci con il percorso corretto del primo file JSON
-
-const JsonAnagrafica = require('./anagrafica.json'); // Sostituisci con il percorso corretto del secondo file JSON
+//------------ IMPOSTAZIONI --------------------------------------------------------------
+const client = new Discord.Client();
+const prefisso_inizio_cmd = '?';
+const cmd_cerca_particella = 'p';
+const cmd_cerca_anagrafica = 'a';
+//------------ JSON ----------------------------------------------------------------------
+const JsonParticelle = require('./particelle.json');
+const JsonAnagrafica = require('./anagrafica.json'); 
 
 client.on('ready', () => {
   console.log(`Lo script si e' connesso correttamente! il bot si chiama: ${client.user.tag}`);
@@ -15,80 +16,125 @@ client.on('ready', () => {
 
 client.on('message', (message) => {
   if (message.author.bot) return;
-  if (!message.content.startsWith(prefix)) return;
-
-  const args = message.content.slice(prefix.length).trim().split(/ +/);
+  if (!message.content.startsWith(prefisso_inizio_cmd)) return;
+  const args = message.content.slice(prefisso_inizio_cmd.length).trim().split(/ +/);
   const command = args.shift().toLowerCase();
-
-  if (command === comando) {
+  if (command === cmd_cerca_particella) {
     if (args.length === 2) {
       const foglioDaCercare = parseInt(args[0]);
       const numeroDaCercare = parseInt(args[1]);
       //--------- BLOCCO RICERCA DATO -------------------
-      // Cerca nel primo file JSON
+      // Cerca nel file JSON ( particelle.json )
       const risultati1 = JsonParticelle.data.filter((item) => {
         return item.FOGLIO === foglioDaCercare && item.NUMERO === numeroDaCercare;
       });
-
-      const partita = risultati1[0].PARTITA;
-
-      // Cerca nel secondo file JSON
-      const risultati2 = JsonAnagrafica.data.filter((item) => {
-        return item.PARTITA === partita;
-      });
-
-      let intestatari = [];
-
-      risultati2.forEach(intestatario => {
-        intestatari.push({
-          nome: intestatario.NOME,
-          cognome: intestatario.COGNOME
-        })
-      })
-
-      risultati1[0].intestatari = intestatari;
-
-      console.log(risultati1);
       if (risultati1.length > 0) {
         risultati1.forEach((risultato) => {
-          // ManipolazioneStringaRisultato con questo manopoli il risultato della stringa facndogli scrivere quello che vuoi tu a patto che sia presente nel file json
-         // const ManipolazioneStringaRisultato = `### INFORMAZIONI PERSONALI\n NOME: ${risultato.NOME}\nCOGNOME: ${risultato.COGNOME}\nSUP: ${risultato.SUPPLEMEN}\n### INFORMAZIONI PARTICELLA\n ETTARI: ${risultato.ETTARI}\ARE: ${risultato.ARE}\CENTIARE: ${risultato.CENTIARE}`;
-         //--------- EMBED ( OGGETTO DOVE VENGONO STAMPATE TUTTE LE STRINGHE) -------------------
+          const partita = risultato.PARTITA;
+          // Cerca nel file JSON ( anagrafica.json )
+          const risultati2 = JsonAnagrafica.data.filter((item) => {
+            return item.PARTITA === partita;
+          });
+          //------------ Array inseribili a condizione che vengano rispettati dal/i file JSON ------------
+          let intestatari = [];
+          risultati2.forEach(intestatario => {
+            intestatari.push({
+              nome: intestatario.NOME,
+              cognome: intestatario.COGNOME,
+              sesso: intestatario.SESSO
+            });
+          });
+          risultato.intestatari = intestatari;
+          let infoparticelle = [];
+          risultati1.forEach(infoparticella => {
+            infoparticelle.push({
+              ettari: infoparticella.ETTARI,
+              are: infoparticella.ARE,
+              centiare: infoparticella.CENTIARE 
+            });
+          });
+          risultato.infoparticelle = infoparticelle;
+          // ------------ STRINGHE RISULTATI -----------------------------------------------------
+          let s_info_personali = '### INFORMAZIONI PERSONALI\n';
+          intestatari.forEach((intestatario, index) => {
+            s_info_personali += `NOME: *${intestatario.nome}*\nCOGNOME: *${intestatario.cognome}*\nSESSO: *${intestatario.sesso}*\n`;
+            if (index < intestatari.length - 1) {
+              s_info_personali += '\n'; 
+            }
+          });
+          let s_info_part = '### INFORMAZIONI PARTICELLA\n';
+          infoparticelle.forEach((infoparticella, index) => {
+            s_info_part += `ETTARI: *${infoparticella.ettari}*\nARE: *${infoparticella.are}*\nCENTIARE: *${infoparticella.centiare}*\n`;
+            if (index < infoparticelle.length - 1) {
+              s_info_part += '';
+            }
+          });
+          // ------------ EMBED -----------------------------------------------------------------
           const embed = new Discord.MessageEmbed()
-            .setTitle(`Informazioni per FOGLIO ${foglioDaCercare} e NUMERO ${numeroDaCercare}`)
-           .setDescription(JSON.stringify(risultato, null, 2))
-           //.setDescription(ManipolazioneStringaRisultato)
-            .setColor('#00ff00');
-           //--------- EMBED ( OGGETTO DOVE VENGONO STAMPATE TUTTE LE STRINGHE) -------------------
-          message.channel.send(embed);// Visualizza L'embd in chat
+            .setTitle(`Informazioni relativa alla ricerca del FOGLIO *${foglioDaCercare}* e NUMERO *${numeroDaCercare}*\n`)
+            .setDescription(s_info_personali +  '\n' + s_info_part) // Informazioni Personali > Informazioni Particella
+          message.channel.send(embed);
         });
       } else {
         message.reply('Nessun risultato trovato per FOGLIO e NUMERO specificati.');
       }
     } else if (args.length === 1 && args[0] === 'partita') {
-      const partitaDaCercare = parseInt(args[1]);
-
-      // Cerca solo nel secondo file JSON (per la "PARTITA")
-      const risultatiPartita = JsonAnagrafica.data.filter((item) => {
-        return item.PARTITA === partitaDaCercare;
+      // ...
+    }
+  }
+  if (command === cmd_cerca_anagrafica) {
+    if (args.length === 2) {
+      const cognomeDaCercare = args[0]; // Non è necessario il parsing
+      const nomeDaCercare = args[1]; // Non è necessario il parsing
+     //------------ Cerca nel file JSON ( anagrafica.json ) ------------
+      const risultati1 = JsonAnagrafica.data.filter((item) => {
+        return item.COGNOME === cognomeDaCercare && item.NOME === nomeDaCercare;
       });
-
-      if (risultatiPartita.length > 0) {
-        const ManipolazioneStringaRisultato = `NOME: ${risultato.NOME}\nCOGNOME: ${risultato.COGNOME}`;
-        risultatiPartita.forEach((risultato) => {
+  
+      if (risultati1.length > 0) {
+        risultati1.forEach((risultato) => {
+          const partita = risultato.PARTITA;
+          //------------ Cerca nel file JSON ( particelle.json ) ------------
+          const risultati2 = JsonParticelle.data.filter((item) => {
+            return item.PARTITA === partita;
+          });
+          //------------ Array inseribili a condizione che vengano rispettati dalL/i file JSON ------------
+          let intestatari = [];
+          risultati2.forEach(intestatario => {
+            intestatari.push({
+              foglio: intestatario.FOGLIO,
+              numero: intestatario.NUMERO,
+              partita: intestatario.PARTITA
+            });
+          });
+           // ------------ STRINGHE RISULTATI INFORMAZIONI PERSONALI -----------------------------------------------------
+          let s_info_personali = `### INFORMAZIONI ANAGRAFICHE\n`;
+          s_info_personali += `COGNOME: *${cognomeDaCercare}*\nNOME: *${nomeDaCercare}*\nSESSO: *${risultato.SESSO}*\n`;
+           // ------------ STRINGHE RISULTATI TUTTE LE PARTICELLE CHE POSSIEDE QUELL NOMINATIVO -----------------------------------------------------
+          let s_info_part = "> ### INFORMAZIONI PARTICELLA\n";
+          intestatari.forEach((intestatario, index) => {
+            s_info_part += `FOGLIO: *${intestatario.foglio}*\nNUMERO: *${intestatario.numero}*\nPARTITA: *${intestatario.partita}*\n`;
+            if (index < intestatari.length - 1) {
+              s_info_part += '\n';
+            }
+          });
+          // ------------ EMBED -----------------------------------------------------------------
           const embed = new Discord.MessageEmbed()
-            .setTitle(`Intestatario  ${partitaDaCercare} e NUMERO ${numeroDaCercare}`)
-            .setDescription(JSON.stringify(risultato, null, 2))
-            .setColor('#00ff00');
-
+            .setTitle(`la ricerca ha avuto esito positivo! *${partita}*`)
+            .setDescription(s_info_personali + '\n' + s_info_part);
           message.channel.send(embed);
+          
         });
       } else {
-        message.reply('Nessun risultato trovato per la PARTITA specificata.');
+        message.reply('Nessun risultato trovato per COGNOME e NOME specificati.');
       }
+    } else {
+      message.reply('Utilizzo del comando errato. Usa `!a <COGNOME> <NOME>`.');
     }
   }
 });
 
-const token = 'MTE2MTM0MTE5MDM4NjQ4NzUwOQ.GIDWHe.Z3FL05mKsN_tdVFycNLnwxYyAkhgbrEFs1wt34';
+
+const token = 'MTE2MTE3Mjc4MDExMzQ3MzYxNg.GxiVKz.wf0qaRoWWyg7B5PUCRZgWOXc5zAPy9Ac1xo1pY';
+
 client.login(token);
