@@ -1,22 +1,19 @@
-//------------ LIB -----------------------------------------------------------------------
 const Discord = require('discord.js');
-const fs = require('fs');
-//------------ IMPOSTAZIONI --------------------------------------------------------------
-const client = new Discord.Client();
-const prefisso_inizio_cmd = '?';
-const cmd_cerca_particella = 'p';
-const cmd_cerca_anagrafica = 'a';
-//------------ JSON ----------------------------------------------------------------------
+const config = require('./config.json');
 const JsonParticelle = require('./particelle.json');
-const JsonAnagrafica = require('./anagrafica.json'); 
+const JsonAnagrafica = require('./anagrafica.json');
 
+const client = new Discord.Client();
+const prefisso_inizio_cmd = config.prefisso_inizio_cmd;
+const cmd_cerca_particella = config.cmd_cerca_particella;
+const cmd_cerca_anagrafica = config.cmd_cerca_anagrafica;
+
+client.login(config.token);
 client.on('ready', () => {
   console.log(`Lo script si e' connesso correttamente! il bot si chiama: ${client.user.tag}`);
 });
-
 client.on('message', (message) => {
-  if (message.author.bot) return;
-  if (!message.content.startsWith(prefisso_inizio_cmd)) return;
+  if (message.author.bot || !message.content.startsWith(prefisso_inizio_cmd)) return;
   const args = message.content.slice(prefisso_inizio_cmd.length).trim().split(/ +/);
   const command = args.shift().toLowerCase();
   if (command === cmd_cerca_particella) {
@@ -25,107 +22,37 @@ client.on('message', (message) => {
       const numeroDaCercare = parseInt(args[1]);
       //--------- BLOCCO RICERCA DATO -------------------
       // Cerca nel file JSON ( particelle.json )
-      const risultati1 = JsonParticelle.data.filter((item) => {
+      const particella = JsonParticelle.data.find((item) => {
         return item.FOGLIO === foglioDaCercare && item.NUMERO === numeroDaCercare;
       });
-      if (risultati1.length > 0) {
-        risultati1.forEach((risultato) => {
-          const partita = risultato.PARTITA;
-          // Cerca nel file JSON ( anagrafica.json )
-          const risultati2 = JsonAnagrafica.data.filter((item) => {
-            return item.PARTITA === partita;
-          });
-          //------------ Array inseribili a condizione che vengano rispettati dal/i file JSON ------------
-          let intestatari = [];
-          risultati2.forEach(intestatario => {
-            intestatari.push({
-              nome: intestatario.NOME,
-              cognome: intestatario.COGNOME,
-              sesso: intestatario.SESSO
-            });
-          });
-          risultato.intestatari = intestatari;
-          let infoparticelle = [];
-          risultati1.forEach(infoparticella => {
-            infoparticelle.push({
-              ettari: infoparticella.ETTARI,
-              are: infoparticella.ARE,
-              centiare: infoparticella.CENTIARE 
-            });
-          });
-          risultato.infoparticelle = infoparticelle;
-          // ------------ STRINGHE RISULTATI -----------------------------------------------------
-          let s_info_personali = '### INFORMAZIONI PERSONALI\n';
-          intestatari.forEach((intestatario, index) => {
-            s_info_personali += `NOME: *${intestatario.nome}*\nCOGNOME: *${intestatario.cognome}*\nSESSO: *${intestatario.sesso}*\n`;
-            if (index < intestatari.length - 1) {
-              s_info_personali += '\n'; 
-            }
-          });
-          let s_info_part = '### INFORMAZIONI PARTICELLA\n';
-          infoparticelle.forEach((infoparticella, index) => {
-            s_info_part += `ETTARI: *${infoparticella.ettari}*\nARE: *${infoparticella.are}*\nCENTIARE: *${infoparticella.centiare}*\n`;
-            if (index < infoparticelle.length - 1) {
-              s_info_part += '';
-            }
-          });
-          // ------------ EMBED -----------------------------------------------------------------
-          const embed = new Discord.MessageEmbed()
-            .setTitle(`Informazioni relativa alla ricerca del FOGLIO *${foglioDaCercare}* e NUMERO *${numeroDaCercare}*\n`)
-            .setDescription(s_info_personali +  '\n' + s_info_part) // Informazioni Personali > Informazioni Particella
-          message.channel.send(embed);
+      if (particella !== undefined) {
+        const intest = JsonAnagrafica.data.filter((item) => {
+          return item.PARTITA === particella.PARTITA;
         });
-      } else {
-        message.reply('Nessun risultato trovato per FOGLIO e NUMERO specificati.');
+        // ------------ EMBED -----------------------------------------------------------------
+        message.channel.send(embedDatiParticella(particella));
+        message.channel.send(embedIntestatriParticella(intest));
       }
-    } else if (args.length === 1 && args[0] === 'partita') {
-      // ...
+      else{
+        message.reply('Nessun risultato trovato per FOGLIO e PARTICELLA specificati.')
+      }
+    } else {
+      message.reply('Utilizzo del comando errato. Usa `!p <FOGLIO> <PARTICELLA>`.');
     }
   }
   if (command === cmd_cerca_anagrafica) {
     if (args.length === 2) {
-      const cognomeDaCercare = args[0]; 
-      const nomeDaCercare = args[1];
+      const cognomeDaCercare = args[0].toUpperCase();
+      const nomeDaCercare = args[1].toUpperCase();
      //------------ Cerca nel file JSON ( anagrafica.json ) ------------
-      const risultati1 = JsonAnagrafica.data.filter((item) => {
+      const partite = JsonAnagrafica.data.filter((item) => {
         return item.COGNOME === cognomeDaCercare && item.NOME === nomeDaCercare;
       });
-  
-      if (risultati1.length > 0) {
-        risultati1.forEach((risultato) => {
-          const partita = risultato.PARTITA;
-          //------------ Cerca nel file JSON ( particelle.json ) ------------
-          const risultati2 = JsonParticelle.data.filter((item) => {
-            return item.PARTITA === partita;
-          });
-          //------------ Array inseribili a condizione che vengano rispettati dalL/i file JSON ------------
-          let intestatari = [];
-          risultati2.forEach(intestatario => {
-            intestatari.push({
-              foglio: intestatario.FOGLIO,
-              numero: intestatario.NUMERO,
-              partita: intestatario.PARTITA
-            });
-          });
-           // ------------ STRINGHE RISULTATI INFORMAZIONI PERSONALI -----------------------------------------------------
-          let s_info_personali = `### INFORMAZIONI ANAGRAFICHE\n`;
-          s_info_personali += `COGNOME: *${cognomeDaCercare}*\nNOME: *${nomeDaCercare}*\nSESSO: *${risultato.SESSO}*\n`;
-           // ------------ STRINGHE RISULTATI TUTTE LE PARTICELLE CHE POSSIEDE QUELL NOMINATIVO -----------------------------------------------------
-          let s_info_part = "> ### INFORMAZIONI PARTICELLA\n";
-          intestatari.forEach((intestatario, index) => {
-            s_info_part += `FOGLIO: *${intestatario.foglio}*\nNUMERO: *${intestatario.numero}*\nPARTITA: *${intestatario.partita}*\n`;
-            if (index < intestatari.length - 1) {
-              s_info_part += '\n';
-            }
-          });
-          // ------------ EMBED -----------------------------------------------------------------
-          const embed = new Discord.MessageEmbed()
-            .setTitle(`la ricerca ha avuto esito positivo! *${partita}*`)
-            .setDescription(s_info_personali + '\n' + s_info_part);
-          message.channel.send(embed);
-          
-        });
-      } else {
+
+      if(partite !== undefined){
+        message.channel.send(embedParticelle(partite));
+      }
+      else {
         message.reply('Nessun risultato trovato per COGNOME e NOME specificati.');
       }
     } else {
@@ -134,7 +61,56 @@ client.on('message', (message) => {
   }
 });
 
+function embedIntestatriParticella(intestatari){
+  const embed = new Discord.MessageEmbed()
+  embed.setTitle("INTESTATARI PARTICELLA");
+  let body = "PROPRIETARI: " + intestatari.length +"\n\n";
+  intestatari.forEach(intestatario => {
+    console.log(intestatario);
+    body += `NOME: ${intestatario.NOME}\nCOGNOME: ${intestatario.COGNOME}\nDATA: ${formatDate(intestatario.DATA)}\n\n`
+  })
+  embed.setDescription(body);
+  embed.setTimestamp();
+  embed.setFooter("Vai! ruba la legna!")
+  return embed;
+}
 
-const token = '';
+function embedDatiParticella(particella){
+  const embed = new Discord.MessageEmbed()
+  embed.setTitle(`INFORMAZIONI PARTICELLA: ${particella.NUMERO} FOGLIO: ${particella.FOGLIO}`);
+  let body = `ETTARI: ${particella.ETTARI}\nARE: ${particella.ARE}\nCENTIARE: ${particella.CENTIARE}\n`;
+  embed.setDescription(body);
+  embed.setTimestamp();
+  return embed;
+}
 
-client.login(token);
+function embedParticelle(partite){
+  const embed = new Discord.MessageEmbed()
+  embed.setTitle(`PARTICELLE DI: ${partite[0].COGNOME} ${partite[0].NOME}`);
+  let totParticelle = 0;
+  let body = "";
+  partite.forEach(partita => {
+    const particellePartita = JsonParticelle.data.filter((item) => {
+      return item.PARTITA === partita.PARTITA;
+    });
+    body += `PARTITA: ${partita.PARTITA}\n\n`;
+    particellePartita.forEach(particella => {
+      totParticelle ++;
+      body += `F: ${particella.FOGLIO}\n`;
+      body += `PART: ${particella.NUMERO}\n`;
+    })
+    body += "\n";
+  })
+  embed.setDescription(body);
+  embed.setTimestamp();
+  embed.setFooter("Totale particelle: " + totParticelle)
+  return embed;
+}
+
+function formatDate(date){
+  const dataNascita = String(date);
+  if(date !== '')
+    new Date()
+    return new Date(dataNascita.substring(0, 4), dataNascita.substring(4,6), parseInt(dataNascita.substring(5,7) +1 ).toString()).toLocaleDateString();
+  return "-";
+}

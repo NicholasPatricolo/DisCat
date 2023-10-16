@@ -1,4 +1,6 @@
 {
-  "prefix": "!bot ",
-  "token": "MTE1MDc3MTU3NTk0NDEzMDY0MQ.GFCEBe.NkPozsE5sDm0ANQ3j4bfY_xvpV59hbHGtpTARg"
+  "prefisso_inizio_cmd": "!",
+  "cmd_cerca_particella": "p",
+  "cmd_cerca_anagrafica": "a",
+  "token": ""
 }
