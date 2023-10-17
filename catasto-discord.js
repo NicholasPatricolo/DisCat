@@ -3,7 +3,7 @@
 ###                                                   ###
 ###    PROGETTO DI ESTRAZIONE DATI CATASTALI          ###
 ###                                                   ###
-#########################################################
+######################################################### 
 
 A PROPOSITO:
 QUESTO PROGETTO: è stato dedicato a fornire un meccanismo per l'accesso ai dati precedentemente archiviati in un database DBF e estratti tramite un interfaccia che andava sul sistema MsDos, che sono stati successivamente convertiti. Il risultato finale è un bot Discord che permette agli utenti di estrarre dati mediante comandi interattivi.
