@@ -2,5 +2,10 @@
   "prefisso_inizio_cmd": "!",
   "cmd_cerca_particella": "p",
   "cmd_cerca_anagrafica": "a",
+  "cmd_cerca_patita": "pa",
+  "img_errore": "https://icons.iconarchive.com/icons/custom-icon-design/flatastic-1/256/delete-1-icon.png",
+  "img_informazioni_particella": "https://icons.iconarchive.com/icons/icojam/blue-bits/256/database-check-icon.png",
+  "img_intestatari_particella": "https://icons.iconarchive.com/icons/graphicloads/colorful-long-shadow/256/People-icon.png",
+  "img_intestatari_particella_anagrafica": "https://icons.iconarchive.com/icons/icojam/blue-bits/256/database-check-icon.png",
   "token": ""
 }
