@@ -17,7 +17,7 @@ I dati estratti dal database catastale includono informazioni cruciali come le p
 
 Riconoscimenti Database:
 
-- Nome del Database: [Inserisci il nome del tuo database]
+- Nome del Database: []
 */
 
 const Discord = require('discord.js');
