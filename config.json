@@ -1,5 +1,5 @@
 {
-  "prefisso_inizio_cmd": "!",
+  "prefisso_inizio_cmd": "?",
   "cmd_cerca_particella": "p",
   "cmd_cerca_anagrafica": "a",
   "cmd_cerca_patita": "pa",
